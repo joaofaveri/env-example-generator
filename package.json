@@ -1,18 +1,26 @@
 {
-  "name": "@legislato/template-package",
-  "version": "1.1.0",
-  "description": "Template para a criação de packages",
+  "name": "@legislato/env-example-generator",
+  "version": "0.0.0",
+  "description": "A package that generates .env.example files. It reads a .env file, and remove all the values, keeping only the keys. Allowing the user to create a template of the enviroment variables",
   "license": "MIT",
   "author": "João Paulo de Faveri",
   "homepage": "https://www.legislato.com.br",
   "repository": {
     "type": "git",
-    "url": "https://github.com/joaofaveri/template-package.git"
+    "url": "https://github.com/joaofaveri/env-example-generator.git"
   },
   "keywords": [
-    "typescript",
-    "package",
-    "template"
+    "dotenv",
+    ".env",
+    "environment variables",
+    "configuration",
+    "example",
+    "generator",
+    "keys",
+    "automation",
+    "boilerplate",
+    "dotenv example generator",
+    "generate .env template"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
