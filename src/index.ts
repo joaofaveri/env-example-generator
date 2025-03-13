@@ -1,2 +1,2 @@
-export * from './bmi'
+export * from './cli'
 export * from './types'
