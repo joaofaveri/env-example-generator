@@ -1,0 +1,71 @@
+{
+  "name": "@legislato/template-package",
+  "version": "1.1.0",
+  "description": "Template para a criação de packages",
+  "license": "MIT",
+  "author": "João Paulo de Faveri",
+  "homepage": "https://www.legislato.com.br",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joaofaveri/template-package.git"
+  },
+  "keywords": [
+    "typescript",
+    "package",
+    "template"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.js",
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint --fix",
+    "test": "jest",
+    "prepare": "husky",
+    "release": "npm run test && npm run build && dotenv release-it -- --verbose",
+    "release:no-npm": "npm run test && dotenv release-it -- --no-npm.publish",
+    "release:changelog": "npm run test && npm run build && dotenv release-it -- --changelog",
+    "release:version": "npm run test && npm run build && dotenv release-it -- --release-version"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@eslint/js": "^9.21.0",
+    "@eslint/json": "^0.10.0",
+    "@jest/globals": "^29.7.0",
+    "@release-it/conventional-changelog": "^10.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.5",
+    "babel-jest": "^29.7.0",
+    "commitizen": "^4.3.1",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "dotenv-cli": "^8.0.0",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.2",
+    "eslint-plugin-jest": "^28.11.0",
+    "eslint-plugin-prettier": "^5.2.3",
+    "git-cz": "^4.9.0",
+    "husky": "^9.1.7",
+    "inquirer": "^9.3.7",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.2",
+    "release-it": "^18.1.2",
+    "ts-jest": "^29.2.6",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/git-cz"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
