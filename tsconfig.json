@@ -4,6 +4,7 @@
     "noImplicitAny": true,
     "esModuleInterop": true,
     "strictNullChecks": true,
+    "resolveJsonModule": true,
     "target": "ES2022",
     "moduleResolution": "node",
     "module": "CommonJS",
