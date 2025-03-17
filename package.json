@@ -25,7 +25,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.js",
-  "bin": "./dist/index.js",
+  "bin": {
+    "env-example-generator": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsup",
     "lint": "eslint --fix",
@@ -43,6 +45,7 @@
     "@eslint/json": "^0.10.0",
     "@jest/globals": "^29.7.0",
     "@release-it/conventional-changelog": "^10.0.0",
+    "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.5",
     "babel-jest": "^29.7.0",
@@ -76,5 +79,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "ora": "^8.2.0"
   }
 }
