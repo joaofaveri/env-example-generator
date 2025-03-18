@@ -10,9 +10,12 @@ const config: Config = {
   coverageProvider: 'v8',
   verbose: true,
   testEnvironment: 'node',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  preset: 'ts-jest',
   transform: {
-    '^.+.tsx?$': ['ts-jest', {}]
-  }
+    '^.+\\.(ts|tsx)?$': ['ts-jest', { isolatedModules: true }]
+  },
+  transformIgnorePatterns: ['node_modules/(?!ora)/']
 }
 
 export default config
