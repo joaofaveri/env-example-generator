@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises'
 import ora from 'ora'
+import * as os from 'os'
 import * as path from 'path'
 
 const DEFAULT_ENV_FILES = [
@@ -17,42 +18,47 @@ export async function generateEnvFiles(
   includeComments: boolean,
   delimiter: string
 ): Promise<void> {
-  const mainSpinner = ora('Generating files...').start()
+  let checkFilesSpinner: ora.Ora | undefined
+  let processSpinner: ora.Ora | undefined
+  let typesSpinner: ora.Ora | undefined
 
   try {
     let filesToProcess: string[] = []
     if (!inputPath) {
-      const checkFilesSpinner = ora(
-        'Checking for default .env files...'
-      ).start()
+      checkFilesSpinner = ora('Checking for default .env files...').start()
       filesToProcess = await findDefaultEnvFiles()
       checkFilesSpinner.succeed(`Found ${filesToProcess.length} .env files.`)
 
       if (filesToProcess.length === 0) {
-        mainSpinner.fail('Error: No .env files found.')
-        process.exit(1)
+        throw new Error('No .env files found.')
       }
     } else {
       filesToProcess = [inputPath]
     }
 
     for (const filePath of filesToProcess) {
-      const processSpinner = ora(
-        `Processing ${path.basename(filePath)}...`
-      ).start()
-      await processEnvFile(
-        filePath,
-        outputPath,
-        generateTypes,
-        removeComments,
-        includeComments,
-        delimiter
-      )
-      processSpinner.succeed(`${path.basename(filePath)} processed.`)
+      processSpinner = ora(`Processing ${path.basename(filePath)}...`).start()
+      try {
+        await processEnvFile(
+          filePath,
+          outputPath,
+          removeComments,
+          includeComments,
+          delimiter
+        )
+        processSpinner.succeed(`${path.basename(filePath)} processed.`)
+      } catch (error) {
+        processSpinner.fail(
+          `Error processing file: ${(error as Error).message}`
+        )
+        throw new Error(`Error processing file: ${(error as Error).message}`)
+      } finally {
+        processSpinner.stop()
+      }
     }
 
     if (generateTypes) {
-      const typesSpinner = ora('Generating env.d.ts...').start()
+      typesSpinner = ora('Generating env.d.ts...').start()
       const keys = await extractKeys(filesToProcess)
       const typesContent = generateTypesContent(keys)
       await fs.writeFile(
@@ -61,11 +67,13 @@ export async function generateEnvFiles(
       )
       typesSpinner.succeed('env.d.ts generated.')
     }
-
-    mainSpinner.succeed('Files generated successfully.')
   } catch (error) {
-    mainSpinner.fail(`Error generating files: ${(error as Error).message}`)
-    process.exit(1)
+    checkFilesSpinner?.fail(`Error checking files: ${(error as Error).message}`)
+    typesSpinner?.fail(`Error generating types: ${(error as Error).message}`)
+    throw new Error(`Error generating files: ${(error as Error).message}`)
+  } finally {
+    checkFilesSpinner?.stop()
+    typesSpinner?.stop()
   }
 }
 
@@ -86,7 +94,6 @@ async function findDefaultEnvFiles(): Promise<string[]> {
 async function processEnvFile(
   inputPath: string,
   outputPath: string,
-  generateTypes: boolean,
   removeComments: boolean,
   includeComments: boolean,
   delimiter: string
@@ -94,34 +101,42 @@ async function processEnvFile(
   if (!(await checkFilePermissions(inputPath))) {
     throw new Error(`Permission denied: Cannot read file ${inputPath}`)
   }
+  let mainSpinner: ora.Ora | undefined
+  try {
+    mainSpinner = ora('Generating files...').start()
+    const envContent = await fs.readFile(inputPath, 'utf-8')
+    const lines = envContent.split(os.EOL)
+    const keys: string[] = []
+    const exampleLines: string[] = []
 
-  const envContent = await fs.readFile(inputPath, 'utf-8')
-  const lines = envContent.split('\n')
-  const keys: string[] = []
-  const exampleLines: string[] = []
+    for (const line of lines) {
+      if (removeComments && (line.startsWith('#') || line.startsWith(';'))) {
+        continue
+      }
 
-  for (const line of lines) {
-    if (removeComments && (line.startsWith('#') || line.startsWith(';'))) {
-      continue
+      if (includeComments && (line.startsWith('#') || line.startsWith(';'))) {
+        exampleLines.push(line)
+        continue
+      }
+
+      const [key] = line.split(delimiter)
+      if (key) {
+        keys.push(key.trim())
+        exampleLines.push(`${key.trim()}=`)
+      }
     }
-
-    if (includeComments && (line.startsWith('#') || line.startsWith(';'))) {
-      exampleLines.push(line)
-      continue
-    }
-
-    const [key] = line.split(delimiter)
-    if (key) {
-      keys.push(key.trim())
-      exampleLines.push(`${key.trim()}=`)
-    }
+    const outputFileName = path.basename(inputPath) + '.example'
+    await fs.writeFile(
+      path.join(path.dirname(outputPath), outputFileName),
+      exampleLines.join(os.EOL)
+    )
+    mainSpinner.succeed('Files generated successfully.')
+  } catch (error) {
+    mainSpinner?.fail(`Error generating files: ${(error as Error).message}`)
+    throw new Error(`Error generating files: ${(error as Error).message}`)
+  } finally {
+    mainSpinner?.stop()
   }
-
-  const outputFileName = path.basename(inputPath) + '.example'
-  await fs.writeFile(
-    path.join(path.dirname(outputPath), outputFileName),
-    exampleLines.join('\n')
-  )
 }
 
 async function extractKeys(filePaths: string[]): Promise<string[]> {
@@ -153,10 +168,10 @@ async function checkFilePermissions(filePath: string): Promise<boolean> {
 }
 
 function generateTypesContent(keys: string[]): string {
-  let content = 'declare namespace NodeJS {\n  interface ProcessEnv {\n'
+  let content = `declare namespace NodeJS {${os.EOL}  interface ProcessEnv {${os.EOL}`
   keys.forEach(key => {
-    content += `    ${key}: string;\n`
+    content += `    ${key}: string;${os.EOL}`
   })
-  content += '  }\n}\n'
+  content += `  }${os.EOL}}${os.EOL}`
   return content
 }

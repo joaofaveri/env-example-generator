@@ -1,9 +1,10 @@
 import * as fs from 'fs/promises'
+import * as os from 'os'
 import * as path from 'path'
 import { generateEnvFiles } from '../src/generator'
 
 describe('generateEnvFiles', () => {
-  const testDir = path.join(__dirname, 'test-files')
+  const testDir = path.join(__dirname, 'tmp')
   const inputPath = path.join(testDir, '.env')
   const outputPath = path.join(testDir, '.env.example')
   const typesPath = path.join(testDir, 'env.d.ts')
@@ -12,7 +13,7 @@ describe('generateEnvFiles', () => {
     await fs.mkdir(testDir, { recursive: true })
     await fs.writeFile(
       inputPath,
-      'API_KEY=123\nDATABASE_URL=postgres://user:password@host:port/db'
+      `API_KEY=123${os.EOL}DATABASE_URL=postgres://user:password@host:port/db`
     )
   })
 
@@ -27,13 +28,13 @@ describe('generateEnvFiles', () => {
   })
 
   afterAll(async () => {
-    await fs.rmdir(testDir, { recursive: true })
+    await fs.rm(testDir, { recursive: true })
   })
 
   it('should generate .env.example file', async () => {
     await generateEnvFiles(inputPath, outputPath, false, false, false, '=')
     const exampleContent = await fs.readFile(outputPath, 'utf-8')
-    expect(exampleContent).toBe('API_KEY=\nDATABASE_URL=\n')
+    expect(exampleContent).toBe(`API_KEY=${os.EOL}DATABASE_URL=`)
   })
 
   it('should generate env.d.ts file', async () => {
@@ -46,31 +47,33 @@ describe('generateEnvFiles', () => {
   it('should remove comments', async () => {
     await fs.writeFile(
       inputPath,
-      'API_KEY=123\n# COMMENT\nDATABASE_URL=postgres://user:password@host:port/db'
+      `API_KEY=123${os.EOL}# COMMENT${os.EOL}DATABASE_URL=postgres://user:password@host:port/db`
     )
     await generateEnvFiles(inputPath, outputPath, false, true, false, '=')
     const exampleContent = await fs.readFile(outputPath, 'utf-8')
-    expect(exampleContent).toBe('API_KEY=\nDATABASE_URL=\n')
+    expect(exampleContent).toBe(`API_KEY=${os.EOL}DATABASE_URL=`)
   })
 
   it('should include comments', async () => {
     await fs.writeFile(
       inputPath,
-      'API_KEY=123\n# COMMENT\nDATABASE_URL=postgres://user:password@host:port/db'
+      `API_KEY=123${os.EOL}# COMMENT${os.EOL}DATABASE_URL=postgres://user:password@host:port/db`
     )
     await generateEnvFiles(inputPath, outputPath, false, false, true, '=')
     const exampleContent = await fs.readFile(outputPath, 'utf-8')
-    expect(exampleContent).toBe('API_KEY=\n# COMMENT\nDATABASE_URL=\n')
+    expect(exampleContent).toBe(
+      `API_KEY=${os.EOL}# COMMENT${os.EOL}DATABASE_URL=`
+    )
   })
 
   it('should use custom delimiter', async () => {
     await fs.writeFile(
       inputPath,
-      'API_KEY:123\nDATABASE_URL:postgres://user:password@host:port/db'
+      `API_KEY:123${os.EOL}DATABASE_URL:postgres://user:password@host:port/db`
     )
     await generateEnvFiles(inputPath, outputPath, false, false, false, ':')
     const exampleContent = await fs.readFile(outputPath, 'utf-8')
-    expect(exampleContent).toBe('API_KEY=\nDATABASE_URL=\n')
+    expect(exampleContent).toBe(`API_KEY=${os.EOL}DATABASE_URL=`)
   })
 
   it('should handle file permission errors', async () => {
