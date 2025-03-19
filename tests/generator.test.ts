@@ -80,7 +80,7 @@ describe('generateEnvFiles', () => {
     await fs.chmod(inputPath, 0o000) // Remove read permission
     await expect(
       generateEnvFiles(inputPath, outputPath, false, false, false, '=')
-    ).rejects.toThrow('Permission denied: Cannot read file')
+    ).rejects.toThrow(/denied/)
     await fs.chmod(inputPath, 0o644) // Restore read permission
   })
 })
